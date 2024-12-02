@@ -1,0 +1,10 @@
+C:\Users\Админ\Desktop\CGUI\bin\Release\CGUI.exe.config
+C:\Users\Админ\Desktop\CGUI\bin\Release\CGUI.exe
+C:\Users\Админ\Desktop\CGUI\bin\Release\CGUI.pdb
+C:\Users\Админ\Desktop\CGUI\obj\Release\CGUI.csproj.AssemblyReference.cache
+C:\Users\Админ\Desktop\CGUI\obj\Release\CGUI.Properties.Resources.resources
+C:\Users\Админ\Desktop\CGUI\obj\Release\CGUI.csproj.GenerateResource.cache
+C:\Users\Админ\Desktop\CGUI\obj\Release\CGUI.csproj.CoreCompileInputs.cache
+C:\Users\Админ\Desktop\CGUI\obj\Release\CGUI.exe
+C:\Users\Админ\Desktop\CGUI\obj\Release\CGUI.pdb
+C:\Users\Админ\Desktop\CGUI\obj\Release\CGUI.Form1.resources
