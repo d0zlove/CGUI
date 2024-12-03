@@ -7,12 +7,15 @@ namespace CGUI
 {
     public class GUIclass : Control
     {
-        private Timer _colorTimer;             // Таймер для анимации
-        private double _hue = 210;            // Начальный тон в синем диапазоне
-        private double _saturation = 0.7;     // Насыщенность
-        private double _value = 1.0;          // Яркость
-        private bool _isHovered = false;      // Флаг состояния наведения
-        private bool _isIncreasing = true;    // Направление изменения (увеличение или уменьшение)
+        private Timer _animationTimer;
+        private double _hue = 210;
+        private double _saturation = 0.7;
+        private double _value = 1.0;
+        private bool _isHovered = false;
+        private bool _isIncreasingHue = true;
+
+        private float _innerCircleSize = 1.0f;  // Исходный размер светло-голубого круга (отношение к основному)
+        private bool _isExpandingInner = false;  // Флаг для изменения размера светло-голубого круга
 
         public GUIclass()
         {
@@ -23,107 +26,132 @@ namespace CGUI
                      ControlStyles.UserPaint, true);
 
             DoubleBuffered = true;
-            Size = new Size(500, 500); 
+            Size = new Size(500, 500);
 
-            _colorTimer = new Timer();
-            _colorTimer.Interval = 50; 
-            _colorTimer.Tick += (s, e) =>
+            _animationTimer = new Timer { Interval = 50 };
+            _animationTimer.Tick += (s, e) =>
             {
+                // Анимация изменения оттенка
+                if (_hue >= 240) _isIncreasingHue = false;
+                else if (_hue <= 180) _isIncreasingHue = true;
 
-                if (_hue >= 240)
-                    _isIncreasing = false;
+                _hue += _isIncreasingHue ? 1 : -1;
 
-                else if (_hue <= 180)
-                    _isIncreasing = true;
+                // Анимация изменения размера внутреннего круга (светло-голубого)
+                if (_innerCircleSize >= 1.0f) _isExpandingInner = false;
+                else if (_innerCircleSize <= 0.8f) _isExpandingInner = true;
 
-                if (_isIncreasing)
-                    _hue += 1; 
+                if (_isHovered && _innerCircleSize <= 1.0f)
+                {
+                    _innerCircleSize -= 0.01f;
+                }
                 else
-                    _hue -= 1; 
-                Invalidate(); 
-            };
-            _colorTimer.Start();
-        }
+                    _innerCircleSize += _isExpandingInner ? 0.01f : -0.01f;
 
+                Invalidate();
+            };
+            _animationTimer.Start();
+        }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
             Graphics graph = e.Graphics;
-
             graph.SmoothingMode = SmoothingMode.AntiAlias;
             graph.Clear(Parent.BackColor);
 
-            // Получаем текущие цвета из ограниченного синего диапазона
+            int innerMargin = 20;
+            float innerSize = Width - innerMargin * 2;
+            RectangleF innerRect = new RectangleF(
+                (Width - innerSize * _innerCircleSize) / 2,
+                (Height - innerSize * _innerCircleSize) / 2,
+                innerSize * _innerCircleSize, innerSize * _innerCircleSize);
+            using (Brush innerBrush = new SolidBrush(Color.LightBlue))
+            {
+                graph.FillEllipse(innerBrush, innerRect);
+            }
+
+            // Основной круг с градиентом
+            int mainMargin = 30;
+            float mainSize = Width - mainMargin * 2;
+            RectangleF mainRect = new RectangleF(mainMargin, mainMargin, mainSize, mainSize);
+
             Color animatedColor1 = ColorFromHSV(_hue, _saturation, _value);
-            Color animatedColor2 = ColorFromHSV(_hue + 30, _saturation, _value); // Отступ для градиента
+            Color animatedColor2 = ColorFromHSV(_hue + 30, _saturation, _value);
 
             if (_isHovered)
             {
-                // При наведении делаем цвета ярче
-                animatedColor1 = Color.White;
-                animatedColor2 = Color.LightGray;
+                animatedColor1 = ColorFromHSV(_hue, 0.6f, _value);
+                animatedColor2 = ColorFromHSV(_hue + 30, 0.6f, _value);
             }
 
-            // Прямоугольник для градиента
-            Rectangle gradientRect = new Rectangle(0, 0, Width, Height);
-
             using (LinearGradientBrush gradientBrush = new LinearGradientBrush(
-                gradientRect,
+                mainRect,
                 animatedColor1,
                 animatedColor2,
                 LinearGradientMode.ForwardDiagonal))
             {
-                graph.FillEllipse(gradientBrush, 0, 0, Width - 1, Height - 1); // Рисуем круг с градиентом
+                graph.FillEllipse(gradientBrush, mainRect);
             }
 
+            // Рисуем текст "START" в центре круга
+            string text = "START";
+            Font font = new Font("Arial", 12, FontStyle.Bold);
+            SizeF textSize = graph.MeasureString(text, font);
+            PointF textPosition = new PointF(
+                (Width - textSize.Width) / 2,
+                (Height - textSize.Height) / 2
+            );
+
+            using (Brush textBrush = new SolidBrush(Color.Black))
+            {
+                graph.DrawString(text, font, textBrush, textPosition);
+            }
         }
 
         protected override void OnMouseEnter(EventArgs e)
         {
             base.OnMouseEnter(e);
-            _isHovered = true; // Устанавливаем флаг наведения
-            Invalidate(); // Перерисовываем
+            _isHovered = true;
+            Cursor = Cursors.Hand;  // Устанавливаем курсор "рука" при наведении
+            Invalidate();
         }
 
         protected override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
-            _isHovered = false; // Сбрасываем флаг наведения
-            Invalidate(); // Перерисовываем
+            _isHovered = false;
+            Invalidate();
         }
 
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
-
-            // Обеспечиваем, что ширина и высота всегда равны
-            int size = Math.Min(Width, Height); // Находим меньшую сторону
-            Size = new Size(size, size); // Устанавливаем квадратный размер
+            int size = Math.Min(Width, Height);
+            Size = new Size(size, size);
         }
 
-        // Метод для получения цвета из HSV
         private static Color ColorFromHSV(double hue, double saturation, double value)
         {
             int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
             double f = hue / 60 - Math.Floor(hue / 60);
 
-            value = value * 255;
+            value *= 255;
             int v = Convert.ToInt32(value);
             int p = Convert.ToInt32(value * (1 - saturation));
             int q = Convert.ToInt32(value * (1 - f * saturation));
             int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
-           
-            switch (hi)
+
+            return hi switch
             {
-                case 0: return Color.FromArgb(255, v, t, p);
-                case 1: return Color.FromArgb(255, q, v, p);
-                case 2: return Color.FromArgb(255, p, v, t);
-                case 3: return Color.FromArgb(255, p, q, v);
-                case 4: return Color.FromArgb(255, t, p, v);
-                default: return Color.FromArgb(255, v, p, q);
-            }
+                0 => Color.FromArgb(255, v, t, p),
+                1 => Color.FromArgb(255, q, v, p),
+                2 => Color.FromArgb(255, p, v, t),
+                3 => Color.FromArgb(255, p, q, v),
+                4 => Color.FromArgb(255, t, p, v),
+                _ => Color.FromArgb(255, v, p, q),
+            };
         }
     }
 }

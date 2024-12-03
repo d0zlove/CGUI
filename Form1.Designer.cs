@@ -35,9 +35,10 @@ namespace CGUI
             // guIclass1
             // 
             this.guIclass1.BackColor = System.Drawing.Color.CornflowerBlue;
-            this.guIclass1.Location = new System.Drawing.Point(93, 72);
+            this.guIclass1.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.guIclass1.Location = new System.Drawing.Point(63, 42);
             this.guIclass1.Name = "guIclass1";
-            this.guIclass1.Size = new System.Drawing.Size(109, 109);
+            this.guIclass1.Size = new System.Drawing.Size(156, 156);
             this.guIclass1.TabIndex = 0;
             this.guIclass1.Text = "guIclass1";
             // 
